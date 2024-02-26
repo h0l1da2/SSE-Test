@@ -1,5 +1,6 @@
 package com.example.sse.service;
 
+import com.example.sse.domain.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
@@ -19,10 +20,10 @@ public class SseService {
         WebClient webClient = WebClient.create("http://localhost:8000/sse-server");
 
         // body Type
-        ParameterizedTypeReference<ServerSentEvent<String>> type =
+        ParameterizedTypeReference<ServerSentEvent<User>> type =
                 new ParameterizedTypeReference<>() {};
 
-        Flux<ServerSentEvent<String>> eventStream = webClient.get()
+        Flux<ServerSentEvent<User>> eventStream = webClient.get()
                 .uri("/stream-sse")
                 .retrieve()
                 .bodyToFlux(type);

@@ -6,10 +6,15 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/sse")
@@ -39,8 +44,38 @@ public class SseTestController {
                 .map(sequence -> ServerSentEvent.<User>builder()
                         .id(String.valueOf(sequence))
                         .event("user-event")
-                        .data(user)
+                        .data(getUser())
                         .build());
+    }
+
+    @GetMapping("/stream-sse-mvc")
+    public SseEmitter streamSseMvc() {
+        SseEmitter emitter = new SseEmitter();
+        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+
+        sseMvcExecutor.execute(() -> {
+            for (int i = 0; true; i++) {
+                try {
+                    SseEventBuilder event = SseEmitter.event()
+                            .id(String.valueOf(i))
+                            .data(getUser())
+                            .name("user-event-mvc");
+                    emitter.send(event);
+                    Thread.sleep(1000);
+                } catch (IOException | InterruptedException e) {
+                    emitter.completeWithError(e);
+                }
+            }
+        });
+        return emitter;
+    }
+
+    private User getUser() {
+        return User.builder()
+                .name("holiday")
+                .username("holiday_k")
+                .age(28)
+                .build();
     }
 
 }
